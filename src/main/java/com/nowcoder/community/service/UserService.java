@@ -164,4 +164,13 @@ public class UserService implements CommunityConstant {
         //凭证状态改为无效
         loginTicketMapper.updateStatus(ticket, 1);
     }
+
+    public LoginTicket findByTicket(String ticket) {
+        LoginTicket loginTicket = loginTicketMapper.selectByTicket(ticket);
+        return loginTicket;
+    }
+
+    public int updateHeader(int userId, String headerUrl) {
+        return userMapper.updateHeader(userId, headerUrl);
+    }
 }
