@@ -45,6 +45,32 @@ public class UserService implements CommunityConstant {
         return userMapper.selectById(id);
     }
 
+    public Map<String, Object> resetPassword(String email, String password) {
+        Map<String, Object> map = new HashMap<>();
+
+        if(StringUtils.isBlank(email)) {
+            map.put("emailMsg", "邮箱不能为空！");
+            return map;
+        }
+
+        if(StringUtils.isBlank(password)) {
+            map.put("passwordMsg", "密码不能为空！");
+            return map;
+        }
+
+        User user = userMapper.selectByEmail(email);
+        if(user == null) {
+            map.put("emailMsg", "邮箱未被注册！");
+            return map;
+        }
+        // 重置密码
+        password = CommunityUtil.md5(password + user.getSalt());
+        userMapper.updatePassword(user.getId(), password);
+
+        map.put("user", user);
+        return map;
+    }
+
     public Map<String, Object> register(User user) {
         Map<String, Object> map = new HashMap<>();
 
@@ -172,5 +198,32 @@ public class UserService implements CommunityConstant {
 
     public int updateHeader(int userId, String headerUrl) {
         return userMapper.updateHeader(userId, headerUrl);
+    }
+
+    public Map<String, Object> updatePassword(int userId, String oldPassword, String newPassword) {
+        Map<String, Object> map = new HashMap<>();
+
+        // 空值处理
+        if (StringUtils.isBlank(oldPassword)) {
+            map.put("oldPasswordMsg", "原密码不能为空!");
+            return map;
+        }
+        if (StringUtils.isBlank(newPassword)) {
+            map.put("newPasswordMsg", "新密码不能为空!");
+            return map;
+        }
+
+        User user = userMapper.selectById(userId);
+        oldPassword = CommunityUtil.md5(oldPassword + user.getSalt());
+
+        if(!oldPassword.equals(user.getPassword())) {
+            map.put("oldPasswordMsg", "原密码不正确！");
+            return map;
+        }
+
+        newPassword = CommunityUtil.md5(newPassword + user.getSalt());
+        userMapper.updatePassword(userId, newPassword);
+
+        return map;
     }
 }
