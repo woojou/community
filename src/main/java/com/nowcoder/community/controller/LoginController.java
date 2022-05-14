@@ -5,6 +5,7 @@ import com.nowcoder.community.entity.User;
 import com.nowcoder.community.service.UserService;
 import com.nowcoder.community.util.CommunityConstant;
 import com.nowcoder.community.util.CommunityUtil;
+import com.nowcoder.community.util.MailClient;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import javax.imageio.ImageIO;
@@ -29,6 +31,11 @@ import java.util.Map;
 public class LoginController implements CommunityConstant {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
+    @Autowired
+    private MailClient mailClient;
+
+    @Autowired
+    private TemplateEngine templateEngine;
 
     @Autowired
     private UserService userService;
@@ -139,7 +146,7 @@ public class LoginController implements CommunityConstant {
         return "/site/forget";
     }
 
-/*    // 获取验证码
+    // 获取验证码
     @RequestMapping(path = "/forget/code", method = RequestMethod.GET)
     @ResponseBody
     public String getForgetCode(String email, HttpSession session) {
@@ -159,18 +166,18 @@ public class LoginController implements CommunityConstant {
         session.setAttribute("verifyCode", code);
 
         return CommunityUtil.getJSONString(0);
-    }*/
+    }
 
-    @RequestMapping(path = "/forget", method = RequestMethod.POST)
-    public String resetPassword(String email, String code, String password, Model model, HttpSession session) {
-        String verifyCode = (String) session.getAttribute("verifyCode");
+    // 重置密码
+    @RequestMapping(path = "/forget/password", method = RequestMethod.POST)
+    public String resetPassword(String email, String verifyCode, String password, Model model, HttpSession session) {
+        String code = (String) session.getAttribute("verifyCode");
         if (StringUtils.isBlank(verifyCode) || StringUtils.isBlank(code) || !code.equalsIgnoreCase(verifyCode)) {
             model.addAttribute("codeMsg", "验证码错误!");
             return "/site/forget";
         }
 
         Map<String, Object> map = userService.resetPassword(email, password);
-
         if (map.containsKey("user")) {
             return "redirect:/login";
         } else {
