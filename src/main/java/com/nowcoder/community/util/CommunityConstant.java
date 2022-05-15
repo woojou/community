@@ -36,4 +36,10 @@ public interface CommunityConstant {
      * 回复
      */
     int ENTITY_TYPE_REPLY = 2;
+
+    /**
+     * 实体类型: 用户
+     */
+    int ENTITY_TYPE_USER = 3;
+
 }

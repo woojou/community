@@ -3,8 +3,10 @@ package com.nowcoder.community.controller;
 
 import com.nowcoder.community.Annotation.LoginRequired;
 import com.nowcoder.community.entity.User;
+import com.nowcoder.community.service.FollowService;
 import com.nowcoder.community.service.LikeService;
 import com.nowcoder.community.service.UserService;
+import com.nowcoder.community.util.CommunityConstant;
 import com.nowcoder.community.util.CommunityUtil;
 import com.nowcoder.community.util.HostHolder;
 import org.apache.commons.lang3.StringUtils;
@@ -25,7 +27,7 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/user")
-public class UserController {
+public class UserController implements CommunityConstant {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
@@ -47,6 +49,9 @@ public class UserController {
     @Autowired
     private LikeService likeService;
 
+    @Autowired
+    private FollowService followService;
+
 
     @LoginRequired
     @RequestMapping(path = "/setting", method = RequestMethod.GET)
@@ -57,7 +62,7 @@ public class UserController {
     @LoginRequired
     @RequestMapping(path = "/upload", method = RequestMethod.POST)
     public String uploadHeader(MultipartFile headerImage, Model model) {
-        if(headerImage == null) {
+        if (headerImage == null) {
             model.addAttribute("error", "您还没有选择图片！");
             return "/site/setting";
         }
@@ -65,7 +70,7 @@ public class UserController {
         String fileName = headerImage.getOriginalFilename();
         String suffix = fileName.substring(fileName.lastIndexOf("."));
 
-        if(StringUtils.isBlank(suffix)) {
+        if (StringUtils.isBlank(suffix)) {
             model.addAttribute("error", "图片格式不正确！");
             return "/site/setting";
         }
@@ -95,12 +100,12 @@ public class UserController {
         // 设置响应类型
         response.setContentType("image/" + suffix);
 
-        try(FileInputStream fis = new FileInputStream(fileName);
-            OutputStream fos = response.getOutputStream()) {
+        try (FileInputStream fis = new FileInputStream(fileName);
+             OutputStream fos = response.getOutputStream()) {
 
             byte[] buffer = new byte[1024];
             int b = 0;
-            while((b = fis.read(buffer)) != -1) {
+            while ((b = fis.read(buffer)) != -1) {
                 fos.write(buffer, 0, b);
             }
         } catch (IOException e) {
@@ -110,7 +115,7 @@ public class UserController {
 
     @RequestMapping(path = "/updatePassword", method = RequestMethod.POST)
     public String updatePassword(String oldPassword, String newPassword, String confirmPassword, Model model) {
-        if(StringUtils.isBlank(confirmPassword) || !confirmPassword.equals(newPassword)) {
+        if (StringUtils.isBlank(confirmPassword) || !confirmPassword.equals(newPassword)) {
             model.addAttribute("confirmPasswordMsg", "两次输入的密码不一致");
             return "/site/setting";
         }
@@ -118,7 +123,7 @@ public class UserController {
         User user = hostHolder.getUser();
         Map<String, Object> map = userService.updatePassword(user.getId(), oldPassword, newPassword);
 
-        if(map == null || map.isEmpty()) {
+        if (map == null || map.isEmpty()) {
             return "redirect:/logout";
         } else {
             model.addAttribute("oldPasswordMsg", map.get("oldPasswordMsg"));
@@ -139,6 +144,18 @@ public class UserController {
         // 点赞数量
         int likeCount = likeService.findUserLikeCount(userId);
         model.addAttribute("likeCount", likeCount);
+        // 粉丝数量
+        long followerCount = followService.findFollowerCount(ENTITY_TYPE_USER, userId);
+        model.addAttribute("followerCount", followerCount);
+        // 关注的数量
+        long followeeCount = followService.findFolloweeCount(userId, ENTITY_TYPE_USER);
+        model.addAttribute("followeeCount", followeeCount);
+        // 是否已关注
+        boolean hasFollowed = false;
+        if (hostHolder.getUser() != null) {
+            hasFollowed = followService.hasFollowed(hostHolder.getUser().getId(), ENTITY_TYPE_USER, userId);
+        }
+        model.addAttribute("hasFollowed", hasFollowed);
 
         return "/site/profile";
     }
