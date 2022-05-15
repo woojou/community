@@ -26,6 +26,11 @@ public class LikeController {
     @ResponseBody
     public String like(int entityType, int entityId, int entityUserId) {
         User user = hostHolder.getUser();
+
+        if(user == null) {
+            return CommunityUtil.getJSONString(1, "您还未登录！");
+        }
+
         //执行点赞操作
         likeService.like(user.getId(), entityType, entityId, entityUserId);
 
