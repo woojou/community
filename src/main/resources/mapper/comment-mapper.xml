@@ -40,7 +40,7 @@
         select
         <include refid="selectFields"></include>
         from comment
-        and id = #{id}
+        where id = #{id}
     </select>
 
     <select id="selectCommentsByUser" resultType="Comment">
