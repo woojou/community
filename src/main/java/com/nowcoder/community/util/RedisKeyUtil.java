@@ -1,5 +1,7 @@
 package com.nowcoder.community.util;
 
+import org.springframework.messaging.tcp.reactor.AbstractNioBufferReactorNettyCodec;
+
 public class RedisKeyUtil {
 
     private static final String SPLIT = ":";
@@ -10,6 +12,8 @@ public class RedisKeyUtil {
     private static final String PREFIX_KAPTCHA = "kaptcha";
     private static final String PREFIX_TICKET = "ticket";
     private static final String PREFIX_USER = "user";
+    private static final String PREFIX_UV = "uv";
+    private static final String PREFIX_DAU = "dau";
 
     // 某个用户收到的赞
     // like:user:userId
@@ -47,5 +51,21 @@ public class RedisKeyUtil {
 
     public static String getUserKey(int userId) {
         return PREFIX_USER + SPLIT + userId;
+    }
+
+    public static String getUVKey(String date) {
+        return PREFIX_UV + SPLIT + date;
+    }
+
+    public static String getUVKey(String start, String end) {
+        return PREFIX_UV + SPLIT + start + SPLIT + end;
+    }
+
+    public static String getDAUKey(String date) {
+        return PREFIX_DAU + SPLIT + date;
+    }
+
+    public static String getDAUKey(String start, String end) {
+        return PREFIX_DAU + SPLIT + start + SPLIT + end;
     }
 }
