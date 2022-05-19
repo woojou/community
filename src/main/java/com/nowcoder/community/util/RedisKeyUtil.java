@@ -68,4 +68,9 @@ public class RedisKeyUtil {
     public static String getDAUKey(String start, String end) {
         return PREFIX_DAU + SPLIT + start + SPLIT + end;
     }
+
+    // 帖子分数
+    public static String getPostScoreKey() {
+        return "post" + SPLIT + "score";
+    }
 }
