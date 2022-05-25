@@ -10,6 +10,8 @@ import com.nowcoder.community.service.*;
 import com.nowcoder.community.util.CommunityConstant;
 import com.nowcoder.community.util.CommunityUtil;
 import com.nowcoder.community.util.HostHolder;
+import com.qiniu.util.Auth;
+import com.qiniu.util.StringMap;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +22,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -50,6 +53,19 @@ public class UserController implements CommunityConstant {
     @Value("${community.path.domain}")
     private String domain;
 
+    @Value("${qiniu.key.access}")
+    private String accessKey;
+
+    @Value("${qiniu.key.secret}")
+    private String secretKey;
+
+    @Value("${qiniu.bucket.header.name}")
+    private String headerBucketName;
+
+    @Value("${qiniu.bucket.header.url}")
+    private String headerBucketUrl;
+
+
     @Autowired
     private LikeService likeService;
 
@@ -65,10 +81,34 @@ public class UserController implements CommunityConstant {
 
     @LoginRequired
     @RequestMapping(path = "/setting", method = RequestMethod.GET)
-    public String getSettingPage() {
+    public String getSettingPage(Model model) {
+        // 文件名称
+        String fileName = CommunityUtil.generateUUID();
+        // 设置响应信息（七牛云特定的写法模板）
+        StringMap policy = new StringMap();
+        policy.put("returnBody", CommunityUtil.getJSONString(0));
+        // 生成上传凭证
+        Auth auth = Auth.create(accessKey, secretKey);
+        String uploadToken = auth.uploadToken(headerBucketName, fileName, 3600, policy);
+
+        model.addAttribute("uploadToken", uploadToken);
+        model.addAttribute("fileName", fileName);
+
         return "/site/setting";
     }
 
+    @RequestMapping(path = "header/url", method = RequestMethod.POST)
+    @ResponseBody
+    public String updateHeaderUrl(String fileName) {
+        if(StringUtils.isBlank(fileName)) {
+            return CommunityUtil.getJSONString(1, "文件名不可以为空");
+        }
+        String url = headerBucketUrl+"/"+fileName;
+        userService.updateHeader(hostHolder.getUser().getId(), url);
+        return CommunityUtil.getJSONString(0, "成功！");
+    }
+
+    //废弃
     @LoginRequired
     @RequestMapping(path = "/upload", method = RequestMethod.POST)
     public String uploadHeader(MultipartFile headerImage, Model model) {
@@ -101,6 +141,7 @@ public class UserController implements CommunityConstant {
         return "redirect:/user/setting";
     }
 
+    // 废弃
     @RequestMapping(path = "/header/{fileName}")
     public void getHeader(@PathVariable("fileName") String fileName, HttpServletResponse response) {
         // 服务器存放路径
@@ -174,19 +215,19 @@ public class UserController implements CommunityConstant {
     @RequestMapping(path = "/mypost/{userId}", method = RequestMethod.GET)
     public String getMyPost(@PathVariable("userId") int userId, Page page, Model model) {
         User user = userService.findUserById(userId);
-        if(user == null) {
+        if (user == null) {
             throw new IllegalArgumentException("用户不存在！");
         }
         model.addAttribute("user", user);
 
-        page.setPath("/user/mypost/"+userId);
+        page.setPath("/user/mypost/" + userId);
         page.setRows(discussPostService.findDiscussPostRows(userId));
 
         List<DiscussPost> discussPosts = discussPostService.findDiscussPosts(userId, page.getOffset(), page.getLimit(), 0);
         List<Map<String, Object>> discussVOList = new ArrayList<>();
 
-        if(discussPosts != null) {
-            for(DiscussPost post : discussPosts) {
+        if (discussPosts != null) {
+            for (DiscussPost post : discussPosts) {
                 Map<String, Object> map = new HashMap<>();
                 map.put("discussPost", post);
                 map.put("likeCount", likeService.findEntityLikeCount(ENTITY_TYPE_POST, post.getId()));
@@ -202,19 +243,19 @@ public class UserController implements CommunityConstant {
     @RequestMapping(path = "/myreply/{userId}", method = RequestMethod.GET)
     public String getMyReply(@PathVariable("userId") int userId, Page page, Model model) {
         User user = userService.findUserById(userId);
-        if(user == null) {
+        if (user == null) {
             throw new IllegalArgumentException("用户不存在！");
         }
         model.addAttribute("user", user);
 
-        page.setPath("/user/myreply/"+userId);
+        page.setPath("/user/myreply/" + userId);
         page.setRows(commentService.findUserCount(userId));
 
         List<Comment> comments = commentService.findUserComments(userId, page.getOffset(), page.getLimit());
         List<Map<String, Object>> commentVOList = new ArrayList<>();
 
-        if(comments != null) {
-            for(Comment comment : comments) {
+        if (comments != null) {
+            for (Comment comment : comments) {
                 Map<String, Object> map = new HashMap<>();
                 map.put("comment", comment);
                 DiscussPost post = discussPostService.findDiscssPost(comment.getEntityId());
