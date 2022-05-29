@@ -126,6 +126,7 @@ public class UserController implements CommunityConstant {
         }
 
         fileName = CommunityUtil.generateUUID() + suffix;
+        // uploadPath:本地上传路径
         String dest = uploadPath + "/" + fileName;
         File file = new File(dest);
         try {

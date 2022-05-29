@@ -69,9 +69,12 @@ public class SensitiveFilter {
         TrieNode tempNode = rootNode;
         StringBuilder sb = new StringBuilder();
 
+        // begin指向疑似敏感词的头
         while (begin < text.length()) {
 
             if (end >= text.length()) {
+                // 证明 begin-end 这之间的词不是敏感词，可以把begin加入
+                // 从下一个位置开始重新搜寻敏感词
                 sb.append(text.charAt(begin++));
                 end = begin;
                 continue;
@@ -79,7 +82,9 @@ public class SensitiveFilter {
 
             Character c = text.charAt(end);
 
+            // 如果是符号而不是一个字符，应当略过
             if(isSymbol(c)) {
+                // 如果是头节点，也就是begin=end
                 if (tempNode == rootNode) {
                     sb.append(c);
                     begin++;
@@ -90,7 +95,7 @@ public class SensitiveFilter {
 
             TrieNode curNode = tempNode.getSubNode(c);
             if(curNode == null) {
-                // 以begin开头的字符串不是敏感词
+                // 以begin开头的字符串不是敏感词，把begin加入，而不是一整个词
                 sb.append(text.charAt(begin++));
                 end = begin;
                 // 进行下一轮搜寻

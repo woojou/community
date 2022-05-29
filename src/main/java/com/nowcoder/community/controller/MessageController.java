@@ -72,12 +72,14 @@ public class MessageController implements CommunityConstant {
         page.setPath("/letter/detail/" + conversationId);
         page.setLimit(5);
 
+        // 得到该对话的所有私信条目
         List<Message> letterList = messageService.findLetters(conversationId, page.getOffset(), page.getLimit());
         List<Map<String, Object>> letters = new ArrayList<>();
         if (letterList != null) {
             for (Message message : letterList) {
                 Map<String, Object> map = new HashMap<>();
                 map.put("letter", message);
+                // 每条私信的发信人
                 map.put("fromUser", userService.findUserById(message.getFromId()));
 
                 letters.add(map);
@@ -86,7 +88,7 @@ public class MessageController implements CommunityConstant {
         model.addAttribute("letters", letters);
         // 私信目标
         model.addAttribute("target", getLetterTarget(conversationId));
-        //设置已读
+        // 将私信设置已读
         List<Integer> ids = getLetterIds(letterList);
         if (!ids.isEmpty()) messageService.readMessage(ids);
 

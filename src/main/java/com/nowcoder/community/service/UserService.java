@@ -105,6 +105,7 @@ public class UserService implements CommunityConstant {
         //激活链接：http://localhost:8080/activation/id/activationcode
         String url = domain + contextPath + "/activation/" + user.getId() + "/" + user.getActivationCode();
         context.setVariable("url", url);
+        //利用Thymeleaf模板
         String content = templateEngine.process("/mail/activation", context);
         mailClient.sendMail(user.getEmail(), "激活账号", content);
 

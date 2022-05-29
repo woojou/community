@@ -114,7 +114,9 @@ public class EventConsumer implements CommunityConstant {
             return;
         }
 
+        // 调用业务层发布帖子
         DiscussPost post = discussPostService.findDiscssPost(event.getEntityId());
+        // 更新搜索引擎库
         elasticsearchService.saveDiscussPost(post);
     }
 
